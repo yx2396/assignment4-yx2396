@@ -1,6 +1,6 @@
 ---
 title: "Principle Component Aanalysis"
-output: html_document
+author: 'Yang XU'
 ---
 ## Data
 The data you will be using comes from the Assistments online intelligent tutoring system (https://www.assistments.org/). It describes students working through online math problems. Each student has the following data associated with them:
@@ -16,11 +16,11 @@ The data you will be using comes from the Assistments online intelligent tutorin
 
 ## Start by uploading the data
 ```{r}
-D1 <- 
-
+D1 <- read.csv('Assistments-confidence.csv')
+D1
   #We won't need the id variable, so remove that.
-
-
+D1<- dplyr::select(D1,-1)
+D1
 ```
 
 ## Create a correlation matrix of the relationships between the variables, including correlation coefficients for each pair of variables/features.
@@ -44,7 +44,7 @@ tl.col="black", tl.cex=0.6, tl.srt=45,
 ## Create a new data frame with the mean_correct variables removed
 
 ```{r}
-D2 <- 
+D2 <- dplyr::select(D1,-4)
 
 #The, scale and center your data for easier interpretation
 D2 <- scale(D2, center = TRUE)
@@ -75,6 +75,7 @@ plot(pca, type = "lines")
 ```
 
 ## Think about which components you would drop and make a decision
+The first three components can explain more than one variables, and starting from the fourth components all can only explain less than one variance, so the original variables will just be better. So only keep the first three, and drop the rest components. 
 
 ## Part II
 
@@ -82,14 +83,19 @@ plot(pca, type = "lines")
 #Now, create a data frame of the transformed data from your pca.
 
 D3 <- as.data.frame(pca$x)
-
+D3
 #Attach the variable "mean_correct" from your original data frame to D3.
 
 D4 <- cbind(D3, as.data.frame(D1$mean_correct))
 
 #Now re-run your scatterplots and correlations between the transformed data and mean_correct. If you had dropped some components would you have lost important infomation about mean_correct?
 
-COR2 <- 
+D4 <- select(D4, -PC6)
+COR2 <- cor(D4)
+corrplot(COR2, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
 
 ```
 ## Now print out the eigenvectors (often called loadings) for the components you generated:
@@ -108,9 +114,82 @@ sweep(loadings, 2, colSums(loadings), "/") #sweep() computes each row as a propo
 #You can generate a biplot to help you, though these can be a bit confusing. They plot the transformed data by the first two components. Therefore, the axes represent the direction of maximum variance. Then mapped onto this point cloud are the original directions of the variables, depicted as red arrows. It is supposed to provide a visualization of which variables "go together". Variables that possibly represent the same underlying construct point in the same direction.  
 
 biplot(pca)
+#PC1 
+#PC1 is highly negatively correlated with problems attempted , the mean of attempts in each problem and mean hint. This denotes that the student understand quickly, so no need of many attempts or hints. 
+
+#PC2
+#PC2 is highly positively correlated with number of finished problems in the prior session, and the percentage of correctness in teh prior session, so very likely it indicates prior knowledge acquisition level. 
+
+#PC3
+#PC3 is negatively correlated with confidence in the current session yet positively correlated with problems attempted, which may indicates a low confidence leading to a multiple attempts. 
+###
 
 #Calculate values for each student that represent these your composite variables and then create a new correlogram showing their relationship to mean_correct.
 
 ```
+
+
+
 # Part III  
 ## Also in this repository is a data set and codebook from Rod Martin, Patricia Puhlik-Doris, Gwen Larsen, Jeanette Gray, Kelly Weir at the University of Western Ontario about people's sense of humor. Can you perform a PCA on this data?
+
+```{r}
+H1<- read.csv("humor_data.csv")
+H1
+
+#Instead of the summary statistics, keep the single questions first.
+H2 <- dplyr::select(H1,1:32)
+H2 <- cor(H2)
+corrplot(H2COR, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+
+#scale
+H2<- scale(H2, scale=TRUE)
+pcaH2 <- prcomp(H2)
+pcaH2$sdev
+summary(pcaH2)
+plot(pcaH2, type= 'lines')
+
+
+```
+
+```{r}
+#Keep the summary statistics then.
+H_sum<- dplyr::select(H1,33:36)
+H_sum
+#create a correlation plot
+H_sumCOR<-cor(H_sum)
+corrplot(H_sumCOR, order="AOE", method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+
+#scale
+H_sum <-scale(H_sum,scale = TRUE)
+
+#run PCA analysis
+pcaH_sum<- prcomp(H_sum, scale= TRUE)
+
+pcaH_sum$sdev
+pcaH_sum$sdev^2
+summary(pcaH_sum)
+plot(pcaH_sum, type="lines")
+
+```
+
+```{r}
+#create a new data frame to check the pca with the summarized features
+H3<- as.data.frame(pcaH_sum$x)
+#attach "accuracy"
+H3_2<-cbind(H3, H2) #I always have error here indicating differing number of rows
+#It should be followed to have the scatterplots and coorepations with the two, to see if the pca outperform the summarized characteristics. 
+
+CORH3 <- cor(H3_2)
+corrplot(CORH3, method="circle", tl.pos="lt", type="upper",        
+tl.col="black", tl.cex=0.6, tl.srt=45, 
+        addCoef.col="black", addCoefasPercent = TRUE,
+        sig.level=0.50, insig = "blank")
+
+```
